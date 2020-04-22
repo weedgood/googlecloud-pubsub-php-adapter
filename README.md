@@ -2,9 +2,9 @@
 
 A Php class adapter for the [Goolge Cloud PubSub](https://github.com/googleapis/google-cloud-php-pubsub) package.
 
-[![Author](http://img.shields.io/badge/author-@missill-blue.svg?style=flat-square)](https://github.com/missill)
+[![Author](http://img.shields.io/badge/author-missill-blue.svg?style=flat-square)](https://github.com/missill)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-8892BF.svg?style=flat-square)](https://www.php.net/manual/fr/migration71.new-features.php)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.1-8892BF.svg?style=flat-square)](https://www.php.net/manual/fr/migration71.new-features.php)
 
 
 ## Installation
@@ -63,16 +63,19 @@ foreach ($messages as $message) {
 ## Functions
 ### Uses
 `function consume(string $subscriptionName, string $topicName = '')`
+
 This function always return immediately after one pull. 
-You just can change setMaxMessages for consuming x messages from this pull.
+You just can change setMaxMessages for receiving x messages from this pull.
 If **setAutoCreateTopic** and **setAutoCreateTopicFromSubscription** are *true*, and if **$topicName** is *empty*, it will auto create topic from subscription name if topic not already exists.
+This function returns an array of messages.
 
 `function subscribe(string $subscriptionName, callable $handler, string $topicName = '', $infiniteLoop = true)`
+
 This function is an infinite loop by default thanks to *$infiniteLoop = true*.
 * if **$infiniteLoop** is *true* :
-    * if **setReturnImmediately** is *true* and **setDelay** > 1 second, the loop will sleep every one second between each pull - (**RECOMMENDED**)
+    * if **setReturnImmediately** is *true* and **setDelay** > 1 second, the loop will sleep every one second between each pull
     * if **setReturnImmediately** is *true* and **setDelay** = 0 second, the loop will work everytime, this __**IS NOT  RECOMMENDED**__ because it adversely impacts the performance of the system.
-    * if **setReturnImmediately** is *false*, the system wait (~90 seconds) until at least one message is available, and **setDelay** will just add seconds to this existing delay.
+    * if **setReturnImmediately** is *false*, (**RECOMMENDED**) the system waits (~90 seconds) until at least one message is available, and **setDelay** has no effect.
     
 
 * if **$infiniteLoop** is *false* :
@@ -87,7 +90,7 @@ $pubsub->setMaxMessages(2); // 100 by default
 $pubsub->setReturnImmediately(false); // true by default
 
 // set delay in seconds to wait between each pull
-// note: if ReturnImmediately is false, this option has no interest because serverside pubsub timeout occurs every ~90sec
+// note: if ReturnImmediately is false, (RECOMMENDED) this option has no effect.
 $pubsub->setDelay(2); // 10 by default
 
 // set a suffix for subscriptions
