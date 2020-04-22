@@ -29,7 +29,7 @@ class GcPubSub
      *
      * @var int
      */
-    protected $delay = 10;
+    protected $delay = 0;
 
     /**
      * Max messages for each pull.
@@ -54,11 +54,11 @@ class GcPubSub
 
     /**
      * If return immediately after pull.
-     * Server side pubsub timeout is not configurable and timeout occurs every ~90sec if returnImmediately setted to false.
+     * https: //cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/pull (deprecated)
      *
      * @var bool
      */
-    protected $returnImmediately = true;
+    protected $returnImmediately = false;
 
     /**
      * If topic auto create.
@@ -86,14 +86,14 @@ class GcPubSub
      *
      * @var string
      */
-    protected $topicSuffix = 'topic_';
+    protected $topicSuffix = '';
 
     /**
      * Subscription suffix.
      *
      * @var string
      */
-    protected $subscriptionSuffix = 'subscription_';
+    protected $subscriptionSuffix = '';
 
     /**
      * Create a new instance of GC PubSub.
@@ -407,8 +407,6 @@ class GcPubSub
     /**
      * Display message info.
      *
-     * @param string $subscripttopicNameionName  The Pub/Sub subscription name.
-     * @param string $subscriptionName  The Pub/Sub subscription name.
      * @param Message $message  The Pub/Sub message.
      * @return void
      */
@@ -476,7 +474,7 @@ class GcPubSub
                 call_user_func($handler, $payload);
             }
 
-            if ($infiniteLoop && $isDelayed) {
+            if ($infiniteLoop && $this->returnImmediately && $isDelayed) {
                 sleep($isDelayed);
             }
 

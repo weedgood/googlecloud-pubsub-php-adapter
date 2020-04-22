@@ -28,16 +28,16 @@ class GcPubSubTest extends TestCase
         self::$randomExampleObject = new GcPubSub(self::$ramdomExampleClient);
 
         $this->assertFalse(self::$randomExampleObject->getDebug());
-        $this->assertEquals(10, self::$randomExampleObject->getDelay());
+        $this->assertEquals(0, self::$randomExampleObject->getDelay());
         $this->assertEquals(100, self::$randomExampleObject->getMaxMessages());
         $this->assertEquals(100, self::$randomExampleObject->getBatchSize());
         $this->assertEquals(1.0, self::$randomExampleObject->getCallPeriod());
-        $this->assertTrue(self::$randomExampleObject->getReturnImmediately());
+        $this->assertFalse(self::$randomExampleObject->getReturnImmediately());
         $this->assertTrue(self::$randomExampleObject->getAutoCreateTopic());
         $this->assertTrue(self::$randomExampleObject->getAutoCreateSubscription());
         $this->assertTrue(self::$randomExampleObject->getAutoCreateTopicFromSubscription());
-        $this->assertEquals('topic_', self::$randomExampleObject->getTopicSuffix());
-        $this->assertEquals('subscription_', self::$randomExampleObject->getSubscriptionSuffix());
+        $this->assertEmpty(self::$randomExampleObject->getTopicSuffix());
+        $this->assertEmpty(self::$randomExampleObject->getSubscriptionSuffix());
     }
 
     public function testSetGetDelay()
