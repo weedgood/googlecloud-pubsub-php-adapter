@@ -1,0 +1,43 @@
+{
+    "name": "twipi-group/googlecloud-pubsub-php-adapter",
+    "description": "PHP Adapter class for google-cloud-php-pubsub package.",
+    "keywords": [
+        "gcp",
+        "googlecloud",
+        "pubsub",
+        "php",
+        "adapter"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexis Gomez",
+            "email": "alexis.gomez.182@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "~7.1",
+        "google/cloud-pubsub": "^1.21"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.0",
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TwipiGroup\\GoogleCloudPubSubPhpAdapter\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TwipiGroup\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
