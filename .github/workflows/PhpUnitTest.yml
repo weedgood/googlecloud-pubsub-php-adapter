@@ -19,5 +19,7 @@ jobs:
       uses: actions/checkout@v2
     - name: composer install
       uses: php-actions/composer@v1
-    - name: phpUnit
+    - name: phpUnitMan
+      run: /vendor/bin/phpUnit
+    - name: phpUnitAuto
       uses: php-actions/phpunit@v1
