@@ -20,6 +20,6 @@ jobs:
     - name: composer install
       uses: php-actions/composer@v1
     - name: phpUnitMan
-      run: /vendor/bin/phpUnit
+      run: /vendor/bin/phpunit
     - name: phpUnitAuto
       uses: php-actions/phpunit@v1
