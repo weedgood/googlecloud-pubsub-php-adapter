@@ -11,15 +11,13 @@ on:
       - develop
 
 jobs:
-  build_and_test:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
     - name: checkout project
       uses: actions/checkout@v2
     - name: composer install
-      run: composer install
+      uses: php-actions/composer@v1
     - name: phpUnit
       uses: php-actions/phpunit@v1
-    - name: run tests
-      run: /usr/bin/php -f bin/phpunit
