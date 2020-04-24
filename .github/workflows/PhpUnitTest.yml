@@ -1,0 +1,25 @@
+name: Unit test CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches: 
+      - master
+      - develop
+
+jobs:
+  build and test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout project
+      uses: actions/checkout@v2
+    - name: composer install
+      run: composer install
+    - name: phpUnit
+      uses: php-actions/phpunit@v1
+    - name: run tests
+      run: /usr/bin/php -f bin/phpunit
