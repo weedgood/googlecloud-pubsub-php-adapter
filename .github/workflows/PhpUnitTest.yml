@@ -20,6 +20,6 @@ jobs:
     - name: composer install
       uses: php-actions/composer@v1
     - name: phpUnitMan
-      run: /usr/bin/php -f vendor/bin/phpunit
+      run: /usr/bin/php -f vendor/bin/phpunit GcPubSubTest
     - name: phpUnitAuto
       uses: php-actions/phpunit@v1
