@@ -17,9 +17,7 @@ jobs:
     steps:
     - name: checkout project
       uses: actions/checkout@v2
-    - name: composer install
+    - name: run composer install
       uses: php-actions/composer@v1
-    - name: phpUnitMan
+    - name: run phpunit tests
       run: /usr/bin/php -f vendor/bin/phpunit tests/GcPubSubTest.php
-    - name: phpUnitAuto
-      uses: php-actions/phpunit@v1
