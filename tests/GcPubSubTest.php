@@ -7,9 +7,9 @@ use Google\Cloud\PubSub\Message;
 use Google\Cloud\PubSub\PubSubClient;
 use Google\Cloud\PubSub\Subscription;
 use Google\Cloud\PubSub\Topic;
-use TwipiGroup\GoogleCloudPubSubPhpAdapter\GcPubSub;
 use Mockery;
 use PHPUnit\Framework\TestCase;
+use TwipiGroup\GoogleCloudPubSubPhpAdapter\GcPubSub;
 
 class GcPubSubTest extends TestCase
 {
@@ -23,10 +23,20 @@ class GcPubSubTest extends TestCase
         self::$ramdomExampleClient = Mockery::mock(PubSubClient::class);
     }
 
+    /**
+     * Test constructor
+     */
     public function testConstruct()
     {
         self::$randomExampleObject = new GcPubSub(self::$ramdomExampleClient);
+        $this->assertSame(self::$ramdomExampleClient, self::$randomExampleObject->getClient());
+    }
 
+    /**
+     * Test default values
+     */
+    public function testDefaultValues()
+    {
         $this->assertFalse(self::$randomExampleObject->getDebug());
         $this->assertEquals(0, self::$randomExampleObject->getDelay());
         $this->assertEquals(100, self::$randomExampleObject->getMaxMessages());
@@ -40,30 +50,50 @@ class GcPubSubTest extends TestCase
         $this->assertEmpty(self::$randomExampleObject->getSubscriptionSuffix());
     }
 
+    /**
+     * Set Delay
+     * Get Delay
+     */
     public function testSetGetDelay()
     {
         self::$randomExampleObject->setDelay(5);
         $this->assertEquals(5, self::$randomExampleObject->getDelay());
     }
 
+    /**
+     * Set MaxMessages
+     * Get MaxMessages
+     */
     public function testSetGetMaxMessages()
     {
         self::$randomExampleObject->setMaxMessages(50);
         $this->assertEquals(50, self::$randomExampleObject->getMaxMessages());
     }
 
+    /**
+     * Set BatchSize
+     * Get BatchSize
+     */
     public function testSetGetBatchSize()
     {
         self::$randomExampleObject->setBatchSize(100);
         $this->assertEquals(100, self::$randomExampleObject->getBatchSize());
     }
 
+    /**
+     * Set CallPeriod
+     * Get CallPeriod
+     */
     public function testSetGetCallPeriod()
     {
         self::$randomExampleObject->setCallPeriod(10);
         $this->assertEquals(10, self::$randomExampleObject->getCallPeriod());
     }
 
+    /**
+     * Set ReturnImmediately
+     * Get ReturnImmediately
+     */
     public function testSetGetReturnImmediately()
     {
         self::$randomExampleObject->setReturnImmediately(false);
@@ -1073,6 +1103,194 @@ class GcPubSubTest extends TestCase
         $pubsub->setMaxMessages(10);
         $pubsub->setReturnImmediately(true);
         $subscriber = $pubsub->subscribe($subscriptionName, [$handler, 'handle'], $topicName, false);
+    }
+
+    /**
+     * Subscribe
+     */
+    public function testSubscribeWithMessagesAndOnePullAndUnexistingSubscriptionAndUnexistingTopic()
+    {
+        $message1 = new Message(['data' => '{"test":"array"}'], ['ackId' => 1]);
+        $message2 = new Message(['data' => '"test string"'], ['ackId' => 2]);
+        $messageBatch = [
+            $message1,
+            $message2,
+        ];
+
+        $uniqid = uniqid();
+        $subscriptionName = $uniqid;
+        $topicFullName = $uniqid;
+        $subscriptionFullName = self::$randomExampleObject->getSubscriptionSuffix() . $subscriptionName;
+
+        /** @var \Mockery\MockInterface|Subscription */
+        $subscription = $this->createMock(Subscription::class);
+        $subscription->expects($this->once())
+            ->method('exists')
+            ->willReturn(false);
+        $subscription->expects($this->once())
+            ->method('create')
+            ->willReturn($subscription);
+
+        $subscription->expects($this->once())
+            ->method('pull')
+            ->with($this->callback(function ($arg) {
+                if ($arg == [
+                    'maxMessages' => 10,
+                    'returnImmediately' => true,
+                ]) {
+                    return true;
+                }
+                return false;
+            }))
+            ->willReturn($messageBatch);
+
+        $subscription->expects($this->exactly(2))
+            ->method('acknowledge')
+            ->withConsecutive([$this->callback(function ($arg) {
+                if ($arg->data() == '{"test":"array"}' && $arg->ackId() == 1) {
+                    return true;
+                }
+                return false;
+            })], [$this->callback(function ($arg) {
+                if ($arg->data() == '"test string"' && $arg->ackId() == 2) {
+                    return true;
+                }
+                return false;
+            })]);
+
+        /** @var \Mockery\MockInterface|Topic */
+        $topic = $this->createMock(Topic::class);
+        $topic->expects($this->once())
+            ->method('subscription')
+            ->willReturn($subscription);
+            
+        /** @var \Mockery\MockInterface|PubSubClient */
+        $client = $this->createMock(PubSubClient::class);
+        $client->expects($this->once())
+            ->method('subscription')
+            ->with($this->equalTo($subscriptionFullName))
+            ->willReturn($subscription);
+        $client->expects($this->once())
+            ->method('topic')
+            ->with($this->equalTo($topicFullName))
+            ->willReturn($topic);
+        $client->expects($this->once())
+            ->method('createTopic')
+            ->with($this->equalTo($topicFullName))
+            ->willReturn($topic);
+
+        /** @var \Mockery\MockInterface|stdClass */
+        $handler = $this->createPartialMock(\stdClass::class, ['handle']);
+        $handler->expects($this->exactly(2))
+            ->method('handle')
+            ->withConsecutive([$this->callback(function ($arg) {
+                if ($arg == [
+                    'test' => 'array',
+                ]) {
+                    return true;
+                }
+                return false;
+            })], ['test string']);
+
+        $pubsub = new GcPubSub($client);
+        $pubsub->setMaxMessages(10);
+        $pubsub->setReturnImmediately(true);
+        $subscriber = $pubsub->subscribe($subscriptionName, [$handler, 'handle'], '', false);
+    }
+
+    /**
+     * Subscribe
+     */
+    public function testSubscribeWithMessagesAndOnePullAndUnexistingSubscriptionAndUnexistingTopicAndSuffixes()
+    {
+        $message1 = new Message(['data' => '{"test":"array"}'], ['ackId' => 1]);
+        $message2 = new Message(['data' => '"test string"'], ['ackId' => 2]);
+        $messageBatch = [
+            $message1,
+            $message2,
+        ];
+
+        $uniqid = uniqid();
+        $subscriptionName = $uniqid;
+        $topicFullName = 'mytopic_'.$uniqid;
+        $subscriptionFullName = 'mysubscriber_' . $subscriptionName;
+
+        /** @var \Mockery\MockInterface|Subscription */
+        $subscription = $this->createMock(Subscription::class);
+        $subscription->expects($this->once())
+            ->method('exists')
+            ->willReturn(false);
+        $subscription->expects($this->once())
+            ->method('create')
+            ->willReturn($subscription);
+
+        $subscription->expects($this->once())
+            ->method('pull')
+            ->with($this->callback(function ($arg) {
+                if ($arg == [
+                    'maxMessages' => 10,
+                    'returnImmediately' => true,
+                ]) {
+                    return true;
+                }
+                return false;
+            }))
+            ->willReturn($messageBatch);
+
+        $subscription->expects($this->exactly(2))
+            ->method('acknowledge')
+            ->withConsecutive([$this->callback(function ($arg) {
+                if ($arg->data() == '{"test":"array"}' && $arg->ackId() == 1) {
+                    return true;
+                }
+                return false;
+            })], [$this->callback(function ($arg) {
+                if ($arg->data() == '"test string"' && $arg->ackId() == 2) {
+                    return true;
+                }
+                return false;
+            })]);
+
+        /** @var \Mockery\MockInterface|Topic */
+        $topic = $this->createMock(Topic::class);
+        $topic->expects($this->once())
+            ->method('subscription')
+            ->willReturn($subscription);
+            
+        /** @var \Mockery\MockInterface|PubSubClient */
+        $client = $this->createMock(PubSubClient::class);
+        $client->expects($this->once())
+            ->method('subscription')
+            ->with($this->equalTo($subscriptionFullName))
+            ->willReturn($subscription);
+        $client->expects($this->once())
+            ->method('topic')
+            ->with($this->equalTo($topicFullName))
+            ->willReturn($topic);
+        $client->expects($this->once())
+            ->method('createTopic')
+            ->with($this->equalTo($topicFullName))
+            ->willReturn($topic);
+
+        /** @var \Mockery\MockInterface|stdClass */
+        $handler = $this->createPartialMock(\stdClass::class, ['handle']);
+        $handler->expects($this->exactly(2))
+            ->method('handle')
+            ->withConsecutive([$this->callback(function ($arg) {
+                if ($arg == [
+                    'test' => 'array',
+                ]) {
+                    return true;
+                }
+                return false;
+            })], ['test string']);
+
+        $pubsub = new GcPubSub($client);
+        $pubsub->setMaxMessages(10);
+        $pubsub->setReturnImmediately(true);
+        $pubsub->setTopicSuffix('mytopic_');
+        $pubsub->setSubscriptionSuffix('mysubscriber_');
+        $subscriber = $pubsub->subscribe($subscriptionName, [$handler, 'handle'], '', false);
     }
 
     /**

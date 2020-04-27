@@ -61,21 +61,21 @@ class GcPubSub
     protected $returnImmediately = false;
 
     /**
-     * If topic auto create.
+     * If auto create topic.
      *
      * @var bool
      */
     protected $autoCreateTopic = true;
 
     /**
-     * If subscription auto create.
+     * If auto create subscription.
      *
      * @var bool
      */
     protected $autoCreateSubscription = true;
 
     /**
-     * If auto creating topic when create subscription and topic name empty only.
+     * If auto create topic when create subscription and topic name empty only.
      *
      * @var bool
      */
@@ -106,7 +106,7 @@ class GcPubSub
     }
 
     /**
-     * Creates a Pub/Sub topic.
+     * Create a Pub/Sub topic.
      *
      * @param string $topicName  The Pub/Sub topic name.
      * @return Topic
@@ -163,7 +163,7 @@ class GcPubSub
      * @param array $properties  The Pub/Sub topic properties.
      * @return Topic
      */
-    public function updateTopic($topicName, $properties): Topic
+    public function updateTopic(string $topicName, array $properties): Topic
     {
         $topic = $this->getTopic($topicName);
         $topic->update($properties);
@@ -188,7 +188,7 @@ class GcPubSub
     }
 
     /**
-     * Deletes all Pub/Sub topics.
+     * Delete all Pub/Sub topics.
      *
      * @return array
      */
@@ -206,7 +206,7 @@ class GcPubSub
     }
 
     /**
-     * Creates a Pub/Sub subscription.
+     * Create a Pub/Sub subscription.
      *
      * @param string $subscriptionName  The Pub/Sub subscription name.
      * @param string $topicName  The Pub/Sub topic name.
@@ -230,7 +230,7 @@ class GcPubSub
     }
 
     /**
-     * Creates a Pub/Sub subscription.
+     * Create a Pub/Sub subscription.
      *
      * @param string $subscriptionName  The Pub/Sub subscription name.
      * @param string|null $topicName  The Pub/Sub subscription name.
@@ -260,7 +260,7 @@ class GcPubSub
      * @param string $subscriptionName  The Pub/Sub subscription name.
      * @return Subscription
      */
-    public function deleteSubscription($subscriptionName): Subscription
+    public function deleteSubscription(string $subscriptionName): Subscription
     {
         $subscription = $this->getSubscription($subscriptionName);
         $subscription->delete();
@@ -277,7 +277,7 @@ class GcPubSub
      * @param array $properties  The Pub/Sub subscription properties.
      * @return Subscription
      */
-    public function updateSubscription($subscriptionName, $properties): Subscription
+    public function updateSubscription(string $subscriptionName, array $properties): Subscription
     {
         $subscription = $this->getsubscription($subscriptionName);
         $subscription->update($properties);
@@ -330,7 +330,7 @@ class GcPubSub
     }
 
     /**
-     * Publishes a message for a Pub/Sub topic.
+     * Publish a message for a Pub/Sub topic.
      *
      * The publisher should be used in conjunction with the `google-cloud-batch`
      * daemon, which should be running in the background.
@@ -407,10 +407,12 @@ class GcPubSub
     /**
      * Display message info.
      *
+     * @param string $topicName  The Pub/Sub topic name.
+     * @param string $subscriptionName  The Pub/Sub subscription name.
      * @param Message $message  The Pub/Sub message.
      * @return void
      */
-    public function debugInfo($topicName, $subscriptionName, $message): void
+    public function debugInfo(string $topicName, string $subscriptionName, Message $message): void
     {
         if ($this->debug) {
 
@@ -764,7 +766,7 @@ class GcPubSub
      * @param string  $topicName
      * @return string
      */
-    public function getTopicName($topicName): string
+    public function getTopicName(string $topicName): string
     {
         return $this->topicSuffix . $topicName;
     }
@@ -775,7 +777,7 @@ class GcPubSub
      * @param string  $subscriptionName
      * @return string
      */
-    public function getSubscriptionName($subscriptionName): string
+    public function getSubscriptionName(string $subscriptionName): string
     {
         return $this->subscriptionSuffix . $subscriptionName;
     }
