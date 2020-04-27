@@ -145,7 +145,6 @@ This function is an infinite loop by default thanks to *$infiniteLoop = true*.
 * if **$infiniteLoop** is *false* :
     * **setReturnImmediately** and **setDelay** has no impact because just one loop will be executed with only one pull.
 
-
 #### Settings
 ```php
 // set max messages number consuming by pull
