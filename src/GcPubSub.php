@@ -215,7 +215,7 @@ class GcPubSub
     public function createSubscription(string $subscriptionName, string $topicName = ''): Subscription
     {
         if (!$topicName) {
-            
+
             if ($this->autoCreateTopicFromSubscription) {
                 $topicName = $subscriptionName;
             } else {
@@ -373,7 +373,7 @@ class GcPubSub
      *
      * @param string $subscriptionName  The Pub/Sub subscription name to create if not exists.
      * @param string $topicName  The Pub/Sub topic name.
-     * @return array
+     * @return Message[]
      */
     public function consume(string $subscriptionName, string $topicName = ''): array
     {
@@ -393,9 +393,15 @@ class GcPubSub
 
         foreach ($pullMessages as $pullMessage) {
 
-            $messages[] = $pullMessage;
-
             $this->debugInfo($topicName, $subscriptionName, $pullMessage);
+
+            $availableAt = $pullMessage->attribute('availableAt');
+
+            if ($availableAt && $availableAt > time()) {
+                continue;
+            }
+
+            $messages[] = $pullMessage;
 
             // Acknowledge the Pub/Sub message has been received, so it will not be pulled multiple times.
             $subscription->acknowledge($pullMessage);
@@ -457,7 +463,6 @@ class GcPubSub
         ];
 
         do {
-
             if ($this->debug) {
                 echo $subscriptionName . ' : ' . date('Y-m-d H:i:s u') . "\n";
             }
@@ -467,6 +472,12 @@ class GcPubSub
             foreach ($pullMessages as $pullMessage) {
 
                 $this->debugInfo($topicName, $subscriptionName, $pullMessage);
+
+                $availableAt = $pullMessage->attribute('availableAt');
+
+                if ($availableAt && $availableAt > time()) {
+                    continue;
+                }
 
                 // Acknowledge the Pub/Sub message has been received, so it will not be pulled multiple times.
                 $subscription->acknowledge($pullMessage);
@@ -781,5 +792,4 @@ class GcPubSub
     {
         return $this->subscriptionSuffix . $subscriptionName;
     }
-
 }

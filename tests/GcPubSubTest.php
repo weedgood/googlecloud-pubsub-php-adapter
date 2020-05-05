@@ -13,14 +13,15 @@ use TwipiGroup\GoogleCloudPubSubPhpAdapter\GcPubSub;
 
 class GcPubSubTest extends TestCase
 {
+    /** @var GcPubSub */
     public static $randomExampleObject;
 
     /** @var \Mockery\MockInterface|PubSubClient */
-    private static $ramdomExampleClient;
+    private $ramdomExampleClient;
 
     public function setUp()
     {
-        self::$ramdomExampleClient = Mockery::mock(PubSubClient::class);
+        $this->ramdomExampleClient = Mockery::mock(PubSubClient::class);
     }
 
     /**
@@ -28,8 +29,8 @@ class GcPubSubTest extends TestCase
      */
     public function testConstruct()
     {
-        self::$randomExampleObject = new GcPubSub(self::$ramdomExampleClient);
-        $this->assertSame(self::$ramdomExampleClient, self::$randomExampleObject->getClient());
+        self::$randomExampleObject = new GcPubSub($this->ramdomExampleClient);
+        $this->assertSame($this->ramdomExampleClient, self::$randomExampleObject->getClient());
     }
 
     /**
@@ -1031,6 +1032,188 @@ class GcPubSubTest extends TestCase
     }
 
     /**
+     * Consume
+     */
+    public function testConsume()
+    {
+        $data = '{"test":"array"}';
+        $topicName = 'mytopic_' . uniqid();
+        $subscriptionName = 'mysubscription_' . uniqid();
+        $subscriptionFullName = self::$randomExampleObject->getSubscriptionSuffix() . $subscriptionName;
+
+        /** @var \Mockery\MockInterface|Message */
+        $message = $this->getMockBuilder(Message::class)
+            ->setConstructorArgs([['data' => $data], ['ackId' => 1]])
+            ->setMethods([
+                'attribute',
+            ])
+            ->getMock();
+
+        $message->expects($this->once())
+            ->method('attribute')
+            ->with($this->equalTo('availableAt'))
+            ->willReturn(null);
+
+        /** @var \Mockery\MockInterface|Subscription */
+        $subscription = $this->createMock(Subscription::class);
+        $subscription->expects($this->once())
+            ->method('exists')
+            ->willReturn(true);
+
+        $subscription->expects($this->once())
+            ->method('pull')
+            ->with($this->callback(function ($arg) {
+                if ($arg == [
+                    'maxMessages' => 10,
+                    'returnImmediately' => true,
+                ]) {
+                    return true;
+                }
+                return false;
+            }))
+            ->willReturn([$message]);
+
+        $subscription->expects($this->once())
+            ->method('acknowledge')
+            ->withConsecutive([$this->callback(function ($arg) use ($data){
+                if ($arg->data() == $data && $arg->ackId() == 1) {
+                    return true;
+                }
+                return false;
+            })]);
+
+        /** @var \Mockery\MockInterface|PubSubClient */
+        $client = $this->createMock(PubSubClient::class);
+        $client->expects($this->once())
+            ->method('subscription')
+            ->with($this->equalTo($subscriptionFullName))
+            ->willReturn($subscription);
+
+        $pubsub = new GcPubSub($client);
+        $pubsub->setMaxMessages(10);
+        $this->assertSame($data, $pubsub->consume($subscriptionName, $topicName)[0]->data());
+    }
+    
+    /**
+     * Consume with available at attribute
+     */
+    public function testWithAvailableAt()
+    {
+        $data = '{"test":"array"}';
+        $topicName = 'mytopic_' . uniqid();
+        $subscriptionName = 'mysubscription_' . uniqid();
+        $subscriptionFullName = self::$randomExampleObject->getSubscriptionSuffix() . $subscriptionName;
+
+        /** @var \Mockery\MockInterface|Message */
+        $message = $this->getMockBuilder(Message::class)
+            ->setConstructorArgs([['data' => $data], ['ackId' => 1]])
+            ->setMethods([
+                'attribute',
+            ])
+            ->getMock();
+
+        $message->expects($this->once())
+            ->method('attribute')
+            ->with($this->equalTo('availableAt'))
+            ->willReturn(1588682629);
+
+        /** @var \Mockery\MockInterface|Subscription */
+        $subscription = $this->createMock(Subscription::class);
+        $subscription->expects($this->once())
+            ->method('exists')
+            ->willReturn(true);
+
+        $subscription->expects($this->once())
+            ->method('pull')
+            ->with($this->callback(function ($arg) {
+                if ($arg == [
+                    'maxMessages' => 10,
+                    'returnImmediately' => true,
+                ]) {
+                    return true;
+                }
+                return false;
+            }))
+            ->willReturn([$message]);
+
+        $subscription->expects($this->once())
+            ->method('acknowledge')
+            ->withConsecutive([$this->callback(function ($arg) use ($data) {
+                if ($arg->data() == $data && $arg->ackId() == 1) {
+                    return true;
+                }
+                return false;
+            })]);
+
+        /** @var \Mockery\MockInterface|PubSubClient */
+        $client = $this->createMock(PubSubClient::class);
+        $client->expects($this->once())
+            ->method('subscription')
+            ->with($this->equalTo($subscriptionFullName))
+            ->willReturn($subscription);
+
+        $pubsub = new GcPubSub($client);
+        $pubsub->setMaxMessages(10);
+        $this->assertSame($data, $pubsub->consume($subscriptionName, $topicName)[0]->data());
+    }
+
+    /**
+     * Consume with unavailable at condition attribute
+     */
+    public function testConsumeWithUnavailabeAt()
+    {
+        $topicName = 'mytopic_' . uniqid();
+        $subscriptionName = 'mysubscription_' . uniqid();
+        $subscriptionFullName = self::$randomExampleObject->getSubscriptionSuffix() . $subscriptionName;
+
+        /** @var \Mockery\MockInterface|Message */
+        $message = $this->getMockBuilder(Message::class)
+            ->setConstructorArgs([['data' => '{"test":"array"}'], ['ackId' => 1]])
+            ->setMethods([
+                'attribute',
+            ])
+            ->getMock();
+
+        $message->expects($this->once())
+            ->method('attribute')
+            ->with($this->equalTo('availableAt'))
+            ->willReturn(9999999999);
+
+        /** @var \Mockery\MockInterface|Subscription */
+        $subscription = $this->createMock(Subscription::class);
+        $subscription->expects($this->once())
+            ->method('exists')
+            ->willReturn(true);
+
+        $subscription->expects($this->once())
+            ->method('pull')
+            ->with($this->callback(function ($arg) {
+                if ($arg == [
+                    'maxMessages' => 10,
+                    'returnImmediately' => true,
+                ]) {
+                    return true;
+                }
+                return false;
+            }))
+            ->willReturn([$message]);
+
+        $subscription->expects($this->never())
+            ->method('acknowledge');
+
+        /** @var \Mockery\MockInterface|PubSubClient */
+        $client = $this->createMock(PubSubClient::class);
+        $client->expects($this->once())
+            ->method('subscription')
+            ->with($this->equalTo($subscriptionFullName))
+            ->willReturn($subscription);
+
+        $pubsub = new GcPubSub($client);
+        $pubsub->setMaxMessages(10);
+        $this->assertSame([], $pubsub->consume($subscriptionName, $topicName));
+    }
+
+    /**
      * Subscribe
      */
     public function testSubscribeWithMessagesAndOnePull()
@@ -1163,7 +1346,7 @@ class GcPubSubTest extends TestCase
         $topic->expects($this->once())
             ->method('subscription')
             ->willReturn($subscription);
-            
+
         /** @var \Mockery\MockInterface|PubSubClient */
         $client = $this->createMock(PubSubClient::class);
         $client->expects($this->once())
@@ -1212,7 +1395,7 @@ class GcPubSubTest extends TestCase
 
         $uniqid = uniqid();
         $subscriptionName = $uniqid;
-        $topicFullName = 'mytopic_'.$uniqid;
+        $topicFullName = 'mytopic_' . $uniqid;
         $subscriptionFullName = 'mysubscriber_' . $subscriptionName;
 
         /** @var \Mockery\MockInterface|Subscription */
@@ -1256,7 +1439,7 @@ class GcPubSubTest extends TestCase
         $topic->expects($this->once())
             ->method('subscription')
             ->willReturn($subscription);
-            
+
         /** @var \Mockery\MockInterface|PubSubClient */
         $client = $this->createMock(PubSubClient::class);
         $client->expects($this->once())
