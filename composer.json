@@ -1,5 +1,5 @@
 {
-    "name": "twipi-group/googlecloud-pubsub-php-adapter",
+    "name": "weedgood/googlecloud-pubsub-php-adapter",
     "description": "PHP Adapter class for google-cloud-php-pubsub package.",
     "keywords": [
         "gcp",
