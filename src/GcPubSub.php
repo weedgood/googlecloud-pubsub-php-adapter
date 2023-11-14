@@ -24,6 +24,20 @@ class GcPubSub
     protected $debug = false;
 
     /**
+     * should check the topic exist or not and create a topic (admin operation).
+     *
+     * @var boolean
+     */
+    protected $create_topics = false;
+
+    /**
+     * should check the subscription exist or not and create a subscription (admin operation).
+     *
+     * @var boolean
+     */
+    protected $create_subscriptions = false;
+
+    /**
      * Manually delay in seconds between each pull.
      * returnImmediately must be set to true to be efficient
      *
@@ -100,9 +114,11 @@ class GcPubSub
      *
      * @param PubSubClient $client
      */
-    public function __construct(PubSubClient $client)
+    public function __construct(PubSubClient $client, $create_topics = false, $create_subscriptions = false)
     {
         $this->client = $client;
+        $this->create_topics = $create_topics;
+        $this->create_subscriptions = $create_subscriptions;
     }
 
     /**
@@ -127,7 +143,7 @@ class GcPubSub
     {
         $topic = $this->client->topic($this->getTopicName($topicName));
 
-        if (!$topic->exists()) {
+        if ($this->create_topics && !$topic->exists()) {
 
             if ($this->getAutoCreateTopic()) {
 
@@ -241,7 +257,7 @@ class GcPubSub
     {
         $subscription = $this->client->subscription($this->getSubscriptionName($subscriptionName));
 
-        if (!$subscription->exists()) {
+        if ($this->create_subscriptions && !$subscription->exists()) {
 
             if ($this->getAutoCreateSubscription()) {
 
